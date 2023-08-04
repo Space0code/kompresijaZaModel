@@ -41,7 +41,6 @@ def recall(true, predicted, threshold):
 def mse(im1, im2) :
     h, w, rgb = im1.shape
     diff = cv2.subtract(im1, im2)
-    diff = cv2.normalize(diff, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
     err = np.sum(diff**2)
     mse = err/(float(h*w))
     return mse
