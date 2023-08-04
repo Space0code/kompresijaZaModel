@@ -41,11 +41,12 @@ def compressImagePIL(src_file, dest_file, quality):
  
 
 
-for fName in os.listdir(src_dir):
-    src_file =os.path.join(src_dir, fName)
-    dest_file = os.path.join(dest_dir, fName)
-    compressImagePIL(src_file, dest_file, quality)
-    #st -= 1
-    #if (st <= 0) : break
+if __name__ == "__main__":
+    for fName in os.listdir(src_dir):
+        src_file =os.path.join(src_dir, fName)
+        dest_file = os.path.join(dest_dir, fName)
+        compressImagePIL(src_file, dest_file, quality)
+        #st -= 1
+        #if (st <= 0) : break
 
-print("KONEC")
+    print("KONEC")

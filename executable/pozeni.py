@@ -28,6 +28,19 @@
 import os
 from pil_kompresor import compressImagePIL 
 from pcaColor_kompresor import compressImagePCA
+import argparse
+
+# prestavimo argumente sem, ker bo treba tako ali tako to pognati preko ukazne vrstice
+parser = argparse.ArgumentParser()
+parser.add_argument('-img_dir',type=str, help='input dataset directory', default="./test_moje")
+parser.add_argument('-model_path', type=str, help='trained model path', default="./models/model_unet_vgg_16_best.pt")
+parser.add_argument('-model_type', type=str, choices=['vgg16', 'resnet101', 'resnet34'], default='vgg16')
+parser.add_argument('-out_viz_dir', type=str, default='', required=False, help='visualization output dir')
+parser.add_argument('-out_pred_dir', type=str, required=False,  help='prediction output dir', default="./test_results_moje")
+parser.add_argument('-threshold', type=float, default=0.2, help='threshold to cut off crack response')
+parser.add_argument('-subimage_size', type=int, default=-1, help='cut image into smaller parts first to avoid dataloss when resizing')
+args = parser.parse_args()
+
 
 #######
 # 1) poženi model na OG slikah
@@ -46,11 +59,12 @@ for i in range(20):
 
 
 # smiselno hardcodati tole tabelo rangov R !
-R = [5, 50, 500]
+R = [5, 50, 100]
 
 # mapa, kjer so shranjene OG slike
 # nastavi src_dir
-src_dir = "D:\\OneDrive\\Dokumenti_ne_sola\\Konferenca_STeKam\\2023\\git\\kompresijaZaModel\\test_images\\A_People\\images_first100\\images\\images"
+# TODO: spremeni na koncu na args.img_dir oz. nekaj takega ...
+src_dir = args.img_dir #  "D:\\OneDrive\\Dokumenti_ne_sola\\Konferenca_STeKam\\2023\\git\\kompresijaZaModel\\test_images\\A_People\\images_first100\\images\\images"
 
 for q in Q:
 
@@ -58,9 +72,12 @@ for q in Q:
     # nastavi dest_dir
     # default:
     dest_dir = os.path.join(src_dir, f'compressedQ{q}_pilKompresor')
+    os.makedirs(dest_dir, exist_ok=True)
     for fName in os.listdir(src_dir):
-        src_file =os.path.join(src_dir, fName)
+        src_file = os.path.join(src_dir, fName)
         dest_file = os.path.join(dest_dir, fName)
+        if not os.path.isfile(src_file):
+            continue
         compressImagePIL(src_file, dest_file, q)
 
 for r in R:
@@ -68,9 +85,12 @@ for r in R:
     # nastavi dest_dir
     # default:
     dest_dir = os.path.join(src_dir, f'compressedR{r}_pcaKompresor')
+    os.makedirs(dest_dir, exist_ok=True)
     for fName in os.listdir(src_dir):
-        src_file =os.path.join(src_dir, fName)
+        src_file = os.path.join(src_dir, fName)
         dest_file = os.path.join(dest_dir, fName)
+        if not os.path.isfile(src_file):
+            continue
         compressImagePCA(src_file, dest_file, r)
 
 
@@ -82,8 +102,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from inference_unet import main
 
 
-# TODO: klic main(...)
-
+main(args.out_viz_dir, args.out_pred_dir, args.model_type, args.model_path, args.img_dir, args.subimage_size)
 
 
 ###########
