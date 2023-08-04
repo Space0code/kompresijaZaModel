@@ -16,7 +16,7 @@ import os
 
 
 
-print("kompresor1_pcaColor.py START")
+#print("kompresor1_pcaColor.py START")
 
 def compressImagePCA(src_file, dest_file, pca_components):
     #src = os.path.join(src_dir, fName)
@@ -56,4 +56,4 @@ def compressImagePCA(src_file, dest_file, pca_components):
 
 
 
-print("kompresor1_pcaColor.py KONEC")
+#print("kompresor1_pcaColor.py KONEC")

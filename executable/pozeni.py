@@ -29,6 +29,12 @@ import os
 from pil_kompresor import compressImagePIL 
 from pcaColor_kompresor import compressImagePCA
 
+##############
+# NASTAVITVE #
+##############
+src_dir = r'D:\OneDrive\Dokumenti_ne_sola\Konferenca_STeKam\2023\git\git\kompresijaZaModel\test_moje'
+
+
 #######
 # 1) poženi model na OG slikah
 #######
@@ -50,7 +56,6 @@ R = [5, 50, 500]
 
 # mapa, kjer so shranjene OG slike
 # nastavi src_dir
-src_dir = "D:\\OneDrive\\Dokumenti_ne_sola\\Konferenca_STeKam\\2023\\git\\kompresijaZaModel\\test_images\\A_People\\images_first100\\images\\images"
 
 for q in Q:
 
@@ -87,5 +92,7 @@ from inference_unet import main
 
 
 ###########
-# 4) 
+# 4) # primerjaj rezultate glede na metrike -> shrani v csv
 ##########
+
+
