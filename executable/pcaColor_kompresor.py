@@ -22,7 +22,10 @@ def compressImagePCA(src_file, dest_file, pca_components):
     #src = os.path.join(src_dir, fName)
     img_raw = cv2.imread(src_file)  
     img = cv2.cvtColor(img_raw, cv2.COLOR_BGR2RGB)
-    #print(img.shape)
+    if (img.shape[0] <= pca_components or img.shape[1] <= pca_components) :
+        #print("img.shape <= pca_components")
+        return
+
     #print("i=", i, " - og filesize: ", sys.getsizeof(img.tobytes()))
 
     # split img into rgb

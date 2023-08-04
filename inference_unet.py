@@ -16,6 +16,12 @@ import gc
 from utils import load_unet_vgg16, load_unet_resnet_101, load_unet_resnet_34
 from tqdm import tqdm
 
+
+channel_means = [0.485, 0.456, 0.406]
+channel_stds  = [0.229, 0.224, 0.225]
+train_tfms = transforms.Compose([transforms.ToTensor(), transforms.Normalize(channel_means, channel_stds)])
+
+
 def evaluate_img(model, img):
     input_width, input_height = input_size[0], input_size[1]
 
@@ -92,48 +98,32 @@ def disable_axis():
     plt.gca().axes.get_yaxis().set_ticklabels([])
 
 
-
-def main(arg_img_dir, model):  # TODO
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-img_dir',type=str, help='input dataset directory', default="./test_imgs")
-    parser.add_argument('-model_path', type=str, help='trained model path', default="./models/model_unet_vgg_16_best.pt")
-    parser.add_argument('-model_type', type=str, choices=['vgg16', 'resnet101', 'resnet34'], default='vgg16')
-    parser.add_argument('-out_viz_dir', type=str, default='', required=False, help='visualization output dir')
-    parser.add_argument('-out_pred_dir', type=str, required=False,  help='prediction output dir', default="./test_result_moje")
-    parser.add_argument('-threshold', type=float, default=0.2, help='threshold to cut off crack response')
-    parser.add_argument('-subimage_size', type=int, default=-1, help='cut image into smaller parts first to avoid dataloss when resizing')
-    args = parser.parse_args()
-
-    if args.out_viz_dir != '':
-        os.makedirs(args.out_viz_dir, exist_ok=True)
-        for path in Path(args.out_viz_dir).glob('*.*'):
+def main(args_out_viz_dir, args_out_pred_dir, args_model_type, args_model_path, args_img_dir, args_subimage_size, args_threshold):
+    if args_out_viz_dir != '':
+        os.makedirs(args_out_viz_dir, exist_ok=True)
+        for path in Path(args_out_viz_dir).glob('*.*'):
             os.remove(str(path))
 
-    if args.out_pred_dir != '':
-        os.makedirs(args.out_pred_dir, exist_ok=True)
-        for path in Path(args.out_pred_dir).glob('*.*'):
+    if args_out_pred_dir != '':
+        os.makedirs(args_out_pred_dir, exist_ok=True)
+        for path in Path(args_out_pred_dir).glob('*.*'):
             os.remove(str(path))
 
-    if args.model_type == 'vgg16':
-        model = load_unet_vgg16(args.model_path)
-    elif args.model_type  == 'resnet101':
-        model = load_unet_resnet_101(args.model_path)
-    elif args.model_type  == 'resnet34':
-        model = load_unet_resnet_34(args.model_path)
+    if args_model_type == 'vgg16':
+        model = load_unet_vgg16(args_model_path)
+    elif args_model_type  == 'resnet101':
+        model = load_unet_resnet_101(args_model_path)
+    elif args_model_type  == 'resnet34':
+        model = load_unet_resnet_34(args_model_path)
         print(model)
     else:
         print('undefind model name pattern')
         exit()
 
-    channel_means = [0.485, 0.456, 0.406]
-    channel_stds  = [0.229, 0.224, 0.225]
-
-    paths = [path for path in Path(args.img_dir).glob('*.*')]
+    
+    paths = [path for path in Path(args_img_dir).glob('*.*')]
     for path in tqdm(paths):
         # print(str(path))
-
-        train_tfms = transforms.Compose([transforms.ToTensor(), transforms.Normalize(channel_means, channel_stds)])
-
         img_0 = Image.open(str(path))
         img_0 = np.asarray(img_0)
         # print("Shape img0:", img_0.shape)
@@ -143,16 +133,15 @@ def main(arg_img_dir, model):  # TODO
 
         img_0 = img_0[:,:,:3]
 
-        img_height, img_width, img_channels = img_0.shape
+        # img_height, img_width, img_channels = img_0.shape
 
-        prob_map_full = evaluate_img_via_subimages(model, img_0, args.subimage_size)  # evaluate_img(model, img_0)
-        # yield path, img_0, prob_map_full
+        prob_map_full = evaluate_img_via_subimages(model, img_0, args_subimage_size)  # evaluate_img(model, img_0)
+        # ce zelimo kaj ven dobiti: yield path, img_0, prob_map_full
 
+        if args_out_pred_dir != '':
+            cv.imwrite(filename=join(args_out_pred_dir, f'{path.stem}.jpg'), img=(prob_map_full * 255).astype(np.uint8))
 
-        if args.out_pred_dir != '':
-            cv.imwrite(filename=join(args.out_pred_dir, f'{path.stem}.jpg'), img=(prob_map_full * 255).astype(np.uint8))
-
-        if args.out_viz_dir != '':
+        if args_out_viz_dir != '':
             # plt.subplot(121)
             # plt.imshow(img_0), plt.title(f'{img_0.shape}')
             if img_0.shape[0] > 2000 or img_0.shape[1] > 2000:
@@ -166,12 +155,12 @@ def main(arg_img_dir, model):  # TODO
 
             prob_map_patch = evaluate_img_patch(model, img_1)
 
-            #plt.title(f'name={path.stem}. \n cut-off threshold = {args.threshold}', fontsize=4)
+            # plt.title(f'name={path.stem}. \n cut-off threshold = {args_threshold}', fontsize=4)
             prob_map_viz_patch = prob_map_patch.copy()
             prob_map_viz_patch = prob_map_viz_patch/ prob_map_viz_patch.max()
-            prob_map_viz_patch[prob_map_viz_patch < args.threshold] = 0.0
+            prob_map_viz_patch[prob_map_viz_patch < args_threshold] = 0.0
             fig = plt.figure()
-            st = fig.suptitle(f'name={path.stem} \n cut-off threshold = {args.threshold}', fontsize="x-large")
+            st = fig.suptitle(f'name={path.stem} \n cut-off threshold = {args_threshold}', fontsize="x-large")
             ax = fig.add_subplot(231)
             ax.imshow(img_1)
             ax = fig.add_subplot(232)
@@ -181,7 +170,7 @@ def main(arg_img_dir, model):  # TODO
             ax.imshow(prob_map_viz_patch, alpha=0.4)
 
             prob_map_viz_full = prob_map_full.copy()
-            prob_map_viz_full[prob_map_viz_full < args.threshold] = 0.0
+            prob_map_viz_full[prob_map_viz_full < args_threshold] = 0.0
 
             ax = fig.add_subplot(234)
             ax.imshow(img_0)
@@ -191,7 +180,7 @@ def main(arg_img_dir, model):  # TODO
             ax.imshow(img_0)
             ax.imshow(prob_map_viz_full, alpha=0.4)
 
-            plt.savefig(join(args.out_viz_dir, f'{path.stem}.jpg'), dpi=500)
+            plt.savefig(join(args_out_viz_dir, f'{path.stem}.jpg'), dpi=500)
             plt.close('all')
 
         gc.collect()

@@ -9,3 +9,7 @@ __pycache__
 
 # uteži so prevelike
 *.pt
+
+
+# naračunani testni primeri
+test_moje/compressed*
