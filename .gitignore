@@ -1,0 +1,11 @@
+venv
+.vscode
+__pycache__
+
+
+# podatke skrijemo
+**.zip
+**VIRB**
+
+# uteži so prevelike
+*.pt
