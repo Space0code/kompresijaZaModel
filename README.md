@@ -33,6 +33,17 @@ Meni deluje ukaz
 
 (ker sem na Windows - dobil sem ga [tule](https://pytorch.org/get-started/locally/)).
 
+### Dodatni paketi
+
+Če morda še kaj manjka (trenutni `requirements.txt` ne vsebuje vseh paketov),
+dodajte (kot sicer s pip-om, pazite le, da je okolje `venv` aktivirano) in nato izvedite
+
+```
+(venv) > pip freeze > requirements.txt
+```
+
+kar bo posodobilo datoteko `requirements.txt`, ki jo nato še pušnemo.
+
 ## subimage_size
 
 V datoteki `inference_unet.py` je dodan še argument `subimage_size`,
