@@ -36,9 +36,9 @@ def evaluate_img_via_subimages(model, img, subimage_size):
         return evaluate_img(model, img)
     from preprocess_image import cut_image_into_subimages, join_subimages
     subimages = cut_image_into_subimages(img, subimage_size)
-    print("Shape of subimages:", [s.shape for _, _, s in subimages])
+    # print("Shape of subimages:", [s.shape for _, _, s in subimages])
     masks = [(x, y, evaluate_img(model, subimage)) for x, y, subimage in tqdm(subimages)]
-    print("Shape of masks:", [m.shape for _, _, m in masks])
+    # print("Shape of masks:", [m.shape for _, _, m in masks])
     mask = join_subimages(masks, (img.shape[0], img.shape[1]))
     return mask
 
@@ -92,9 +92,8 @@ def disable_axis():
     plt.gca().axes.get_yaxis().set_ticklabels([])
 
 
-if __name__ == '__main__':
-    # python inference_unet.py  -img_dir ./test_images -model_path ./models/model_unet_vgg_16_best.pt -model_type vgg16 -out_pred_dir ./test_result_moje
 
+def main(arg_img_dir, model):  # TODO
     parser = argparse.ArgumentParser()
     parser.add_argument('-img_dir',type=str, help='input dataset directory', default="./test_imgs")
     parser.add_argument('-model_path', type=str, help='trained model path', default="./models/model_unet_vgg_16_best.pt")
@@ -131,13 +130,13 @@ if __name__ == '__main__':
 
     paths = [path for path in Path(args.img_dir).glob('*.*')]
     for path in tqdm(paths):
-        print(str(path))
+        # print(str(path))
 
         train_tfms = transforms.Compose([transforms.ToTensor(), transforms.Normalize(channel_means, channel_stds)])
 
         img_0 = Image.open(str(path))
         img_0 = np.asarray(img_0)
-        print("Shape img0:", img_0.shape)
+        # print("Shape img0:", img_0.shape)
         if len(img_0.shape) != 3:
             print(f'incorrect image shape: {path.name}{img_0.shape}')
             continue
@@ -147,6 +146,7 @@ if __name__ == '__main__':
         img_height, img_width, img_channels = img_0.shape
 
         prob_map_full = evaluate_img_via_subimages(model, img_0, args.subimage_size)  # evaluate_img(model, img_0)
+        # yield path, img_0, prob_map_full
 
 
         if args.out_pred_dir != '':

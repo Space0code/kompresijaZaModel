@@ -77,6 +77,13 @@ for r in R:
 ##############
 # 3) poženi model nad vsako mapo stisnjenih slik
 ##############
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from inference_unet import main
+
+
+# TODO: klic main(...)
+
 
 
 ###########
