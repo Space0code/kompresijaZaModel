@@ -73,18 +73,16 @@ main(args.out_viz_dir, out_pred_dir, args.model_type, args.model_path, args.img_
 #######
 
 # mapa, kjer so shranjene OG slike
-# nastavi src_dir
-# TODO: spremeni na koncu na args.img_dir oz. nekaj takega ...
-src_dir = args.img_dir #  "D:\\OneDrive\\Dokumenti_ne_sola\\Konferenca_STeKam\\2023\\git\\kompresijaZaModel\\test_images\\A_People\\images_first100\\images\\images"
+img_dir = args.img_dir #  "D:\\OneDrive\\Dokumenti_ne_sola\\Konferenca_STeKam\\2023\\git\\kompresijaZaModel\\test_images\\A_People\\images_first100\\images\\images"
 
 for q in Q:
     ### PIL_KOMPRESOR stiska in shranjuje:
     # nastavi dest_dir
     # default: TODO: spremeni dest_dir, da mora biti podan kot argument
-    dest_dir = os.path.join(src_dir, f'compressedQ{q}_pilKompresor')
+    dest_dir = os.path.join(img_dir, f'compressedQ{q}_pilKompresor')
     os.makedirs(dest_dir, exist_ok=True)
-    for fName in os.listdir(src_dir):
-        src_file = os.path.join(src_dir, fName)
+    for fName in os.listdir(img_dir):
+        src_file = os.path.join(img_dir, fName)
         dest_file = os.path.join(dest_dir, fName)
         if not os.path.isfile(src_file):
             continue
@@ -94,10 +92,10 @@ for r in R:
     ### SVD_KOMPRESOR stiska in shranjuje:
     # TODO nastavi dest_dir
     # default:
-    dest_dir = os.path.join(src_dir, f'compressedR{r}_pcaKompresor')
+    dest_dir = os.path.join(img_dir, f'compressedR{r}_pcaKompresor')
     os.makedirs(dest_dir, exist_ok=True)
-    for fName in os.listdir(src_dir):
-        src_file = os.path.join(src_dir, fName)
+    for fName in os.listdir(img_dir):
+        src_file = os.path.join(img_dir, fName)
         dest_file = os.path.join(dest_dir, fName)
         if not os.path.isfile(src_file):
             continue
@@ -126,10 +124,11 @@ for directory in os.listdir(args.img_dir):
 # ostale predikcije so v mapah 'compressed*'
 
 
-out_pred_dir = r'D:\OneDrive\Dokumenti_ne_sola\Konferenca_STeKam\2023\git\git\kompresijaZaModel\test_results_moje'
+out_pred_dir = args.out_pred_dir
 OG_dir = os.path.join(out_pred_dir, 'OG')
 
-results_dir = r'D:\OneDrive\Dokumenti_ne_sola\Konferenca_STeKam\2023\git\git\kompresijaZaModel\rezultati_primerjav'
+# csv naj se shrani v isto mapo, kot so se shranile kompresirane slike
+results_dir = out_pred_dir
 os.makedirs(results_dir, exist_ok=True)
 res_file = open(os.path.join(results_dir, 'results.csv'), 'w', encoding='UTF8', newline='')
 writer = csv.writer(res_file)
