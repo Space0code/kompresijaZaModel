@@ -39,14 +39,17 @@ parser.add_argument('-img_dir',type=str, help='input dataset directory', default
 parser.add_argument('-model_path', type=str, help='trained model path', default="./models/model_unet_vgg_16_best.pt")
 parser.add_argument('-model_type', type=str, choices=['vgg16', 'resnet101', 'resnet34'], default='vgg16')
 parser.add_argument('-out_viz_dir', type=str, default='', required=False, help='visualization output dir')
-parser.add_argument('-out_pred_dir', type=str, required=False,  help='prediction output dir', default="./test_results_moje")
+parser.add_argument('-out_pred_dir', type=str, required=False,  help='prediction output dir', default="")
 parser.add_argument('-threshold', type=float, default=0.2, help='threshold to cut off crack response')
 parser.add_argument('-subimage_size', type=int, default=448, help='cut image into smaller parts first to avoid dataloss when resizing')
+parser.add_argument('-results_dir', type=str, required=True, help='where to store csv file with results of comparisons', default='./results')
+parser.add_argument('-compressed_dir', type=str, required=True, help='where to store compressed images', default='./compressed')
 args = parser.parse_args()
 
 
-# TODO kam naj se cvs shrani? zaenkrat: csv naj se shrani v isto mapo, kot so se shranile kompresirane slike
-results_dir = args.out_pred_dir
+# csv datoteke se shranijo v results_dir
+results_dir = args.results_dir
+os.makedirs(results_dir, exist_ok=True)
 
 
 # ustvari tabelo Q - kvalitete za stopnje stiskanja
@@ -66,6 +69,8 @@ for i in range (12):
 # 1) poženi model na OG slikah
 ##############################
 
+print("Poganjam model na originalih...")
+
 out_pred_dir = os.path.join(args.out_pred_dir, 'OG')
 main(args.out_viz_dir, out_pred_dir, args.model_type, args.model_path, args.img_dir, args.subimage_size, args.threshold)
 
@@ -73,52 +78,76 @@ main(args.out_viz_dir, out_pred_dir, args.model_type, args.model_path, args.img_
 # 2) stisni na q kvalitete oz. na r ranga in shrani
 ###################################################
 
-# mapa, kjer so shranjene OG slike
-img_dir = args.img_dir #  "D:\\OneDrive\\Dokumenti_ne_sola\\Konferenca_STeKam\\2023\\git\\kompresijaZaModel\\test_images\\A_People\\images_first100\\images\\images"
+print("Stiskam slike...")
 
-# TODO implementiraj
 size_percentage_file = open(os.path.join(results_dir, 'size_percentage.csv'), 'w', encoding='UTF8', newline='')
+writer = csv.writer(size_percentage_file)
+header = ["OG_file", "compressed_file", "OG_size", "compressed_size", "compressed/OG"]
+writer.writerow(header)
 
 for q in Q:
     ### PIL_KOMPRESOR stiska in shranjuje:
-    # nastavi dest_dir
-    # default: TODO: spremeni dest_dir, da mora biti podan kot argument
-    dest_dir = os.path.join(img_dir, 'compressedQ{:03}_pilKompresor'.format(q))
+    dest_dir = os.path.join(args.compressed_dir, 'compressedQ{:03}_pilKompresor'.format(q))
     os.makedirs(dest_dir, exist_ok=True)
-    for fName in os.listdir(img_dir):
-        src_file = os.path.join(img_dir, fName)
+    for fName in os.listdir(args.img_dir):
+        src_file = os.path.join(args.img_dir, fName)
         dest_file = os.path.join(dest_dir, fName)
         if not os.path.isfile(src_file):
             continue
         compressImagePIL(src_file, dest_file, q)
 
+        # zapiši razmerje velikosti v size_percentage.csv
+        if (os.path.isfile(src_file) and os.path.isfile(dest_file)):
+            OG_size = os.path.getsize(src_file)
+            compr_size = os.path.getsize(dest_file)
+            row = [src_file, dest_file, OG_size, compr_size, compr_size/OG_size]
+            writer.writerow(row)
+        else:
+            row = [src_file, dest_file, '/', '/', '/']
+            writer.writerow(row)
+
+# pusti vrstico fraj 
+writer.writerow(["", "", ""])
+
 for r in R:
     ### SVD_KOMPRESOR stiska in shranjuje:
-    # TODO nastavi dest_dir
-    # default:
-    dest_dir = os.path.join(img_dir, 'compressedR{:04}_pcaKompresor'.format(r))
+    dest_dir = os.path.join(args.compressed_dir, 'compressedR{:04}_pcaKompresor'.format(r))
     os.makedirs(dest_dir, exist_ok=True)
-    for fName in os.listdir(img_dir):
-        src_file = os.path.join(img_dir, fName)
+    for fName in os.listdir(args.img_dir):
+        src_file = os.path.join(args.img_dir, fName)
         dest_file = os.path.join(dest_dir, fName)
         if not os.path.isfile(src_file):
             continue
         compressImagePCA(src_file, dest_file, r)
 
+        # zapiši razmerje velikosti v size_percentage.csv
+        if (os.path.isfile(src_file) and os.path.isfile(dest_file)):
+            OG_size = os.path.getsize(src_file)
+            compr_size = os.path.getsize(dest_file)
+            row = [src_file, dest_file, OG_size, compr_size, compr_size/OG_size]
+            writer.writerow(row)
+        else:
+            row = [src_file, dest_file, '/', '/', '/']
+            writer.writerow(row)
+
+
+# pomembna vrstica!
+size_percentage_file.close()
 
 ################################################
 # 3) poženi model nad vsako mapo stisnjenih slik
 ################################################
 
+print("Poganjam model na stisnjenih slikah...")
 
-for directory in os.listdir(args.img_dir):
-    if not os.path.isdir(os.path.join(args.img_dir, directory)):
+for directory in os.listdir(args.compressed_dir):
+    if not os.path.isdir(os.path.join(args.compressed_dir, directory)):
         continue
-    img_dir = os.path.join(args.img_dir, directory)
+    compressed_dir = os.path.join(args.compressed_dir, directory)
     out_pred_dir = os.path.join(args.out_pred_dir, directory)
-    out_viz_dir = ''    # TODO popravi
+    #out_viz_dir = ''    # TODO popravi
     os.makedirs(out_pred_dir, exist_ok=True)
-    main(out_viz_dir, out_pred_dir, args.model_type, args.model_path, img_dir, args.subimage_size, args.threshold)
+    main(args.out_viz_dir, out_pred_dir, args.model_type, args.model_path, compressed_dir, args.subimage_size, args.threshold)
 
 #################################################
 # 4) primerjaj rezultate -> zapiši v csv datoteko
@@ -127,6 +156,7 @@ for directory in os.listdir(args.img_dir):
 # predikcije na osnovi originalov so v mapi 'OG'
 # ostale predikcije so v mapah 'compressed*'
 
+print("Primerjam rezultate...")
 
 out_pred_dir = args.out_pred_dir
 OG_dir = os.path.join(out_pred_dir, 'OG')
@@ -136,8 +166,8 @@ os.makedirs(results_dir, exist_ok=True)
 res_file = open(os.path.join(results_dir, 'results.csv'), 'w', encoding='UTF8', newline='')
 writer = csv.writer(res_file)
 
-row = ["direktorij", "slika", "presek/unija", "precision", "recall", "mse"]
-writer.writerow(row)
+header = ["direktorij", "slika", "presek/unija", "precision", "recall", "mse"]
+writer.writerow(header)
 
 # za vsak direktorij izračunaj metrike:
 for d in os.listdir(out_pred_dir):
@@ -146,7 +176,7 @@ for d in os.listdir(out_pred_dir):
 
     for i in os.listdir(os.path.join(out_pred_dir, d)):
         # bolje bi bilo, če bi img_OG naredili samo 1x za vsako OG sliko, 
-        # vendar mislim, da ne bi smelo biti bistvene časovne ralzike
+        # vendar mislim, da ne bi smelo biti bistvene časovne razlike
         name_OG = os.path.join(OG_dir, i)
         name_pred = os.path.join(out_pred_dir, d, i)
         
@@ -167,6 +197,7 @@ for d in os.listdir(out_pred_dir):
         row = [d, i, iou, prec, rec, mse1]
         writer.writerow(row)
 
-
-
+# pomembna vrstica!
 res_file.close()
+
+print("Konec programa.")
