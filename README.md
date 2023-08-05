@@ -1,7 +1,39 @@
 # kompresijaZaModel
-Raziskovalna naloga za konferenco STEKAM 2023 - ugotavljamo spreminjanje uspešnosti "object detection" modela v odvisnosti od velikosti (filesize) slike.
+Raziskovalna naloga za konferenco ŠTeKam 2023 - ugotavljamo spreminjanje uspešnosti "object detection" modela, ki prepoznava razpoke na slikah, v odvistnosti od ranga kompresije slike. Uspešnost ugotavljamo na podlagi različnih metrik:
+- intersection over union,
+- precision,
+- recall,
+- mean square error.
 
-# Poganjanje
+# pozeni.py na kratko
+
+Program se izvaja v štirih korakih:
+1) Model za prepoznavo razpok se požene na originalnih (OG) slikah.
+2) OG slike stisnemo
+    - za različne faktorje,
+    - z dvema različnima programoma za kompresijo: 
+        - eden (pcaColor) temelji na singularnem razcepu (SVD oz. PCA),
+        - drugi (pil) temelji na ??? TODO.
+3) Model za prepoznavo razpok poženemo nad kompresiranimi slikami. 
+4) Rezultate (slike), ki jih izpljune model primerjamo z različnimi metrikami:
+    - intersection over union,
+    - (average) precision,
+    - (average) recall,
+    - mean squared error (mse).
+    
+    Rezultate shranimo v csv datoteko.
+
+# Poganjanje programa pozeni.py
+
+Premaknemo se v korensko mapo repozitorija in v ukazni vrstici izvedemo ukaz:
+```
+> python ./executable/pozeni.py -img_dir <vir-originalnih-slik> -out_viz_dir <vizualizacija-izhodnih-slik> -out_pred_dir <mapa-izhodnih-predikcij> -compressed_dir <mapa-izhodnih-kompresiranih-slik> -results_dir <mapa-z-rezultati-primerjav>
+```
+Vse mape (z izjemo tiste, ki mora vsebovati originalne slike - stikalo ```-img_dir```) kreira program sam, v kolikor še ne obstajajo. Priporočamo, da za vsa stikala (z izjemo ```-img_dir```) nastavite nove, še neobstoječe mape, ali pa prazne obsotječe mape - npr. ```-out_pred_dir ./izhodne_predikcije```.
+
+Dokler program ne zaključi svojega izvajanja, naj se ne piše v ukazno okno in naj se ukaznega okna ne zapira! Program je (uspešno) končal z izvajanjem, če se je v ukazno okno izpisala vrstica ```Konec programa.```
+
+# Poganjanje modela
 
 Model je osnovan na [crackSegmentation](https://github.com/khanhha/crack_segmentation).
 
