@@ -42,11 +42,63 @@ def evaluate_img_via_subimages(model, img, subimage_size):
         return evaluate_img(model, img)
     from preprocess_image import cut_image_into_subimages, join_subimages
     subimages = cut_image_into_subimages(img, subimage_size)
-    # print("Shape of subimages:", [s.shape for _, _, s in subimages])
-    masks = [(x, y, evaluate_img(model, subimage)) for x, y, subimage in tqdm(subimages)]
+    # Slike so 3000 x 4000, vzeli bomo le trapez
+    #  
+    #         (1500, 1000) -- (2500, 1000)
+    #
+    # (0, 0) ---------------------------- (4000, 0)
+    #
+    # (izhodišče je v resnici zgoraj desno, ko se gremo numpy)
+    if (img.shape[0], img.shape[1]) != (3000, 4000):
+        raise ValueError("Image shape must be (3000, 4000)")
+    masks = []
+    for x, y, subimage in subimages:
+        if y >= 1000:
+            mask = evaluate_img(model, subimage)
+            postprocess_mask(mask, x, y)
+        else:
+            mask = np.zeros((subimage.shape[0], subimage.shape[1]))
+        masks.append((x, y, mask))
     # print("Shape of masks:", [m.shape for _, _, m in masks])
     mask = join_subimages(masks, (img.shape[0], img.shape[1]))
     return mask
+
+
+def create_postprocess_masks():
+    masks = np.zeros((1000, 2000), dtype=bool)
+    for x in range(1500):
+        y0 = round(2 * x / 3)
+        for y in range(y0, 1000):
+            i = 999 - y
+            j = x
+            masks[i, j] = True
+    mask_a = masks[:, :1000]
+    mask_b = masks[:, 1000:]
+    mask_c = np.fliplr(mask_b)
+    mask_d = np.fliplr(mask_a)
+    return mask_a, mask_b, mask_c, mask_d
+
+
+MASK_A, MASK_B, MASK_C, MASK_D = create_postprocess_masks()
+
+# for i, mask in enumerate([MASK_A, MASK_B, MASK_C, MASK_D]):
+#     assert mask.shape == (1000, 1000)
+#     cv.imwrite(filename=f'maska{i}.jpg', img=(mask.astype(float) * 255).astype(np.uint8))
+
+
+def postprocess_mask(mask, x, y):
+    if y != 1000:
+        return mask
+    if x == 0:
+        mask[MASK_A] = 0
+    elif x == 1000:
+        mask[MASK_B] = 0
+    elif x == 2000:
+        mask[MASK_C] = 0
+    elif x == 3000:
+        mask[MASK_D] = 0
+    else:
+        raise ValueError(f"Weird x value: {x}")
 
 
 def evaluate_img_patch(model, img):
@@ -98,7 +150,7 @@ def disable_axis():
     plt.gca().axes.get_yaxis().set_ticklabels([])
 
 
-def main(args_out_viz_dir, args_out_pred_dir, args_model_type, args_model_path, args_img_dir, args_subimage_size, args_threshold):
+def main(args_out_viz_dir, args_out_pred_dir, args_model_type, args_model_path, args_img_dir, args_subimage_size, args_threshold, paths=None):
     if args_out_viz_dir != '':
         os.makedirs(args_out_viz_dir, exist_ok=True)
         for path in Path(args_out_viz_dir).glob('*.*'):
@@ -120,8 +172,11 @@ def main(args_out_viz_dir, args_out_pred_dir, args_model_type, args_model_path, 
         print('undefind model name pattern')
         exit()
 
-    
-    paths = [path for path in Path(args_img_dir).glob('*.*')]
+    if paths is None:
+        paths = [path for path in Path(args_img_dir).glob('*.*')]
+    else:
+        paths = [Path(p) for p in paths]
+
     for path in tqdm(paths):
         # print(str(path))
         img_0 = Image.open(str(path))
@@ -136,8 +191,8 @@ def main(args_out_viz_dir, args_out_pred_dir, args_model_type, args_model_path, 
         # img_height, img_width, img_channels = img_0.shape
 
         prob_map_full = evaluate_img_via_subimages(model, img_0, args_subimage_size)  # evaluate_img(model, img_0)
+        yield path, prob_map_full
         # ce zelimo kaj ven dobiti: yield path, img_0, prob_map_full
-
         if args_out_pred_dir != '':
             cv.imwrite(filename=join(args_out_pred_dir, f'{path.stem}.jpg'), img=(prob_map_full * 255).astype(np.uint8))
 

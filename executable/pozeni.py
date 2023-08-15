@@ -41,7 +41,7 @@ parser.add_argument('-model_type', type=str, choices=['vgg16', 'resnet101', 'res
 parser.add_argument('-out_viz_dir', type=str, default='', required=False, help='visualization output dir')
 parser.add_argument('-out_pred_dir', type=str, required=False,  help='prediction output dir', default="")
 parser.add_argument('-threshold', type=float, default=0.2, help='threshold to cut off crack response')
-parser.add_argument('-subimage_size', type=int, default=448, help='cut image into smaller parts first to avoid dataloss when resizing')
+parser.add_argument('-subimage_size', type=int, default=1000, help='cut image into smaller parts first to avoid dataloss when resizing')
 parser.add_argument('-results_dir', type=str, required=True, help='where to store csv file with results of comparisons', default='./results')
 parser.add_argument('-compressed_dir', type=str, required=True, help='where to store compressed images', default='./compressed')
 args = parser.parse_args()
@@ -52,17 +52,18 @@ results_dir = args.results_dir
 os.makedirs(results_dir, exist_ok=True)
 
 
-# ustvari tabelo Q - kvalitete za stopnje stiskanja
-Q = [1]
-for i in range(20):
-    q = 5 * (i + 1)
-    Q.append(q)
+# ustvari tabelo Q - kvalitete za stopnje stiskanja:
+# odštejemo 1, 2, 4, 8 ... od popolne.
+Q = [99, 95, 90, 75, 50, 25, 10]
+# for i in range(20):
+#     q = 5 * (i + 1)
+#     Q.append(q)
 #print(Q)
 
 # ustvari tabelo rangov
-R = []
-for i in range (12):
-    R.append(2**i)
+R = [2 ** i for i in range(9)]
+# for i in range (9):
+#     R.append(2**i)
 
 
 ##############################

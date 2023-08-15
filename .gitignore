@@ -13,3 +13,4 @@ __pycache__
 
 # naračunani testni primeri
 test_moje/compressed*
+test_*
