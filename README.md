@@ -5,6 +5,9 @@ Raziskovalna naloga za konferenco ŠTeKam 2023 - ugotavljamo spreminjanje uspeš
 - recall,
 - mean square error.
 
+# Prispevek
+Prispevek, ki je nastal na podlagi raziskovalne naloge je objavljen v zborniku Študentske tehniške konference ŠTeKam 2023 pod naslovom **Vpliv slikovne kompresije na strojno prepoznavanje razpok na cestah** (objava v bazi COBISS: https://plus.cobiss.net/cobiss/si/sl/bib/164036099). Kopija prispevka je naložena v tem repozitoriju v datoteki *bozak_tomi.pdf*.
+
 # pozeni.py na kratko
 
 Program se izvaja v štirih korakih:
